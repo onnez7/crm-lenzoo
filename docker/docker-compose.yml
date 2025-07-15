@@ -2,31 +2,36 @@ name: crm
 services:
   mariadb:
     image: mariadb:10.8
+    restart: always
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
     environment:
-      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_ROOT_PASSWORD: SUA_SENHA_FORTE
+      MYSQL_DATABASE: frappe
     volumes:
       - mariadb-data:/var/lib/mysql
 
   redis:
     image: redis:alpine
+    restart: always
 
   frappe:
-    image: frappe/bench:latest
-    command: bash /workspace/init.sh
+    image: ghcr.io/frappe/crm:latest
+    restart: always
     environment:
       - SHELL=/bin/bash
     working_dir: /home/frappe
-    volumes:
-      - .:/workspace
+    depends_on:
+      - mariadb
+      - redis
     ports:
       - "8081:8000"
-      - "9100:9000"
-      - "9101:9001"
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - ./logs:/home/frappe/frappe-bench/logs
 
 volumes:
   mariadb-data:
